@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StegoVault - Image Steganography Studio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #0b132b;
+            color: #ffffff;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: #1c2541;
+            border-bottom: 1px solid #3a506b;
+        }
+
+        .card {
+            background-color: #1c2541;
+            border: 1px solid #3a506b;
+            border-radius: 12px;
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid #3a506b;
+        }
+
+        .nav-tabs .nav-link {
+            color: #cbd5e1;
+            border: none;
+            padding: 12px 20px;
+            font-weight: 600;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #00f5d4;
+            background-color: transparent;
+            border-bottom: 2px solid #00f5d4;
+        }
+
+        /* Input Controls */
+        .form-control {
+            background-color: #0b132b !important;
+            border: 1px solid #3a506b !important;
+            color: #ffffff !important;
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1;
+        }
+
+        .form-control:focus {
+            border-color: #00f5d4 !important;
+            box-shadow: 0 0 0 0.25rem rgba(0, 245, 212, 0.25) !important;
+        }
+
+        /* Labels and Text */
+        label, .form-label {
+            color: #e2e8f0 !important;
+            font-weight: 500;
+        }
+
+        .text-light-custom {
+            color: #e2e8f0 !important;
+        }
+
+        .preview-box {
+            width: 100%;
+            height: 250px;
+            border: 2px dashed #3a506b;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #0b132b;
+            color: #94a3b8;
+        }
+
+        .preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Quality Metrics Dashboard - High Contrast Fix */
+        .metric-card {
+            background-color: #0b132b;
+            border: 1px solid #3a506b;
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .metric-label {
+            color: #94a3b8; /* Bright grey label */
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-val {
+            color: #00f5d4; /* Bright Neon Cyan numbers */
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .table-dark {
+            --bs-table-bg: #1c2541;
+            --bs-table-border-color: #3a506b;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-shield-lock-fill text-info me-2"></i>StegoVault LSB Studio
+            </span>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <ul class="nav nav-tabs mb-4" id="stegoTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="encode-tab" data-bs-toggle="tab" data-bs-target="#encode-panel">
+                    <i class="bi bi-lock me-1"></i> Encode Text
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="decode-tab" data-bs-toggle="tab" data-bs-target="#decode-panel">
+                    <i class="bi bi-unlock me-1"></i> Decode Text
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs-panel" onclick="loadLogs()">
+                    <i class="bi bi-journal-text me-1"></i> Database Logs
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="stegoTabContent">
+            <!-- ENCODE PANEL -->
+            <div class="tab-pane fade show active" id="encode-panel">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card p-4">
+                            <h5 class="card-title text-info mb-3">1. Select Cover Image</h5>
+                            <div class="preview-box mb-3" id="encode-preview-box">
+                                <span class="text-light-custom"><i class="bi bi-image fs-1 d-block text-center mb-1"></i>No Image Uploaded</span>
+                            </div>
+                            <input type="file" id="encode-file-input" class="form-control mb-3" accept="image/png, image/jpeg, image/bmp">
+                            
+                            <h5 class="card-title text-info mb-3">2. Secret Payload</h5>
+                            <textarea id="encode-message" class="form-control mb-3" rows="3" placeholder="Enter your secret text here..."></textarea>
+                            
+                            <div class="mb-3">
+                                <label class="form-label mb-1">Passphrase (Optional XOR Key):</label>
+                                <input type="password" id="encode-password" class="form-control" placeholder="Key for encryption">
+                            </div>
+
+                            <button class="btn btn-info w-100 fw-bold py-2" style="background-color: #00f5d4; border: none; color: #0b132b;" onclick="processEncode()">
+                                <i class="bi bi-gear-fill me-1"></i> Encode Message
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card p-4">
+                            <h5 class="card-title text-info mb-3">3. Output Stego Image</h5>
+                            <div class="preview-box mb-3" id="encode-result-box">
+                                <span class="text-light-custom">Result image will appear here</span>
+                            </div>
+                            
+                            <!-- Quality Metrics Section -->
+                            <div class="card p-3 mb-3" style="background-color: #0b132b; border: 1px solid #3a506b;">
+                                <h6 class="text-info font-weight-bold mb-3"><i class="bi bi-bar-chart-line me-1"></i> Quality Metrics</h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="metric-card">
+                                            <span class="metric-label">PSNR (Peak Signal-Noise)</span>
+                                            <span id="metric-psnr" class="metric-val">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-card">
+                                            <span class="metric-label">MSE (Mean Squared)</span>
+                                            <span id="metric-mse" class="metric-val">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a id="download-btn" class="btn btn-outline-info w-100 disabled" download="stego_image.png">
+                                <i class="bi bi-download me-1"></i> Download Stego Image
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DECODE PANEL -->
+            <div class="tab-pane fade" id="decode-panel">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card p-4">
+                            <h5 class="card-title text-info mb-3">Upload Encoded Image</h5>
+                            <div class="preview-box mb-3" id="decode-preview-box">
+                                <span class="text-light-custom"><i class="bi bi-file-image fs-1 d-block text-center mb-1"></i>Select Stego Image</span>
+                            </div>
+                            <input type="file" id="decode-file-input" class="form-control mb-3" accept="image/png, image/bmp">
+
+                            <div class="mb-3">
+                                <label class="form-label mb-1">Passphrase (If encrypted):</label>
+                                <input type="password" id="decode-password" class="form-control" placeholder="Enter password used for encoding">
+                            </div>
+
+                            <button class="btn btn-info w-100 fw-bold py-2" style="background-color: #00f5d4; border: none; color: #0b132b;" onclick="processDecode()">
+                                <i class="bi bi-unlock-fill me-1"></i> Extract Secret Text
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <div class="card p-4">
+                            <h5 class="card-title text-info mb-3">Extracted Secret Message</h5>
+                            <textarea id="decode-output" class="form-control mb-3" rows="8" readonly placeholder="Extracted text will appear here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOGS PANEL -->
+            <div class="tab-pane fade" id="logs-panel">
+                <div class="card p-4">
+                    <h5 class="card-title text-info mb-3">Database Audit Logs</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Action</th>
+                                    <th>Filename</th>
+                                    <th>Msg Length</th>
+                                    <th>Encrypted</th>
+                                    <th>PSNR</th>
+                                    <th>MSE</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-tbody">
+                                <tr><td colspan="8" class="text-center text-light-custom">Loading logs...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('encode-file-input').addEventListener('change', e => previewImage(e.target.files[0], 'encode-preview-box'));
+        document.getElementById('decode-file-input').addEventListener('change', e => previewImage(e.target.files[0], 'decode-preview-box'));
+
+        function previewImage(file, boxId) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = evt => { 
+                document.getElementById(boxId).innerHTML = `<img src="${evt.target.result}" alt="Preview">`; 
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function processEncode() {
+            const fileInput = document.getElementById('encode-file-input');
+            const message = document.getElementById('encode-message').value;
+            const password = document.getElementById('encode-password').value;
+
+            if (!fileInput.files || !fileInput.files[0]) return alert("Please select an image!");
+            if (!message) return alert("Please enter a secret message!");
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('message', message);
+            formData.append('password', password);
+
+            try {
+                const res = await fetch('/api/encode', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('encode-result-box').innerHTML = `<img src="${data.result_image}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+                    document.getElementById('metric-psnr').innerText = `${data.psnr} dB`;
+                    document.getElementById('metric-mse').innerText = data.mse;
+                    
+                    const btn = document.getElementById('download-btn');
+                    btn.href = data.result_image;
+                    btn.classList.remove('disabled');
+                    alert("Encoding Successful!");
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch (err) {
+                alert("Encoding failed: " + err);
+            }
+        }
+
+        async function processDecode() {
+            const fileInput = document.getElementById('decode-file-input');
+            const password = document.getElementById('decode-password').value;
+
+            if (!fileInput.files || !fileInput.files[0]) return alert("Please select an image!");
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('password', password);
+
+            try {
+                const res = await fetch('/api/decode', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('decode-output').value = data.message;
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch (err) {
+                alert("Decoding failed: " + err);
+            }
+        }
+
+        async function loadLogs() {
+            try {
+                const res = await fetch('/api/logs');
+                const data = await res.json();
+                const tbody = document.getElementById('logs-tbody');
+
+                if (data.success && data.logs.length > 0) {
+                    tbody.innerHTML = data.logs.map(log => `
+                        <tr>
+                            <td>${log.id}</td>
+                            <td><span class="badge ${log.action === 'Encode' ? 'bg-primary' : 'bg-success'}">${log.action}</span></td>
+                            <td>${log.filename}</td>
+                            <td>${log.message_len} chars</td>
+                            <td>${log.is_encrypted ? '<span class="text-success">Yes</span>' : '<span class="text-light-custom">No</span>'}</td>
+                            <td>${log.psnr} dB</td>
+                            <td>${log.mse}</td>
+                            <td>${log.timestamp}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-light-custom">No logs recorded yet.</td></tr>`;
+                }
+            } catch (err) {
+                console.error("Failed to load logs", err);
+            }
+        }
+    </script>
+</body>
+</html>
